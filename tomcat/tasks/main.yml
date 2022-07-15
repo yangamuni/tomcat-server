@@ -1,0 +1,28 @@
+---
+- name: dowloing tomcat application 
+  command: wget https://dlcdn.apache.org/tomcat/tomcat-8/v8.5.81/bin/apache-tomcat-8.5.81.tar.gz
+- name: downloding java 
+  yum:
+    name: "{{item}}"
+    state: present
+  with_items:
+    - java-1.8.0-openjdk
+- name: extracting tomcat zip file
+  command: tar -xvf apache-tomcat-8.5.81.tar.gz
+- name: moving tomcat application in to opt folder
+  command: mv /home/ec2-user/apache-tomcat-8.5.81  /opt/
+  ignore_errors: true
+- name: using j2 template to dynamic deployment
+  template:
+    src: "{{item.src}}"
+    dest: "{{item.dest}}"
+    mode: 0777
+    backup: yes
+    owner: root
+    group: root
+  with_items:
+    - {src: '/etc/ansible/tomcat/templates/context.j2',dest: '/opt/apache-tomcat-8.5.81/webapps/manager/META-INF/context.xml'}
+    - {src: '/etc/ansible/tomcat/templates/user.j2',dest: '/opt/apache-tomcat-8.5.81/conf/tomcat-users.xml'} 
+- name: start tomcat server
+  command: nohup /opt/apache-tomcat-8.5.81/bin/startup.sh
+
